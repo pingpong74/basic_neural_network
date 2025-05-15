@@ -93,7 +93,7 @@ fn main() {
 
     	   let mut correct = 0;
 
-            for i in 0..200 {
+			for i in 0..input.len() {
     	   	   let output = network.run(input[i].clone());
 
     		   let mut guess = 0;
@@ -111,8 +111,8 @@ fn main() {
     		    }
             }
 
-            let accuracy = (correct as f64) * 0.5;
-            println!("{:?}", accuracy);
+			let accuracy = (correct as f64) * 0.01;
+			println!("Accuracy: {:?}%", accuracy);
     	}
         else if job == "exit" {
             break;

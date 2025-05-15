@@ -82,21 +82,36 @@ impl Network {
 		}
 	}
 
+	pub fn _train(&mut self, input: &Vec<Vec<f64>>, expected: Vec<Vec<f64>>){
+		
+	}
 
-	// ignore this 
+
+	// ignore this
 	pub fn back_prop(&mut self, outputs: Vec<Vec<f64>>, expected: Vec<Vec<f64>>){
 
-		let w_c_avg: Vec<Matrix> = self.weights.clone().into_iter().map(|mat: Matrix| Matrix::zero_matrix(mat.rows, mat.cols) ).collect();
-		let b_c_avg: Vec<Matrix> = self.biases.clone().into_iter().map(|mat: Matrix| Matrix::zero_matrix(mat.rows, mat.cols) ).collect();
+		let mut w_c_avg: Vec<Matrix> = self.weights.clone().into_iter().map(|mat: Matrix| Matrix::zero_matrix(mat.rows, mat.cols) ).collect();
+		let mut b_c_avg: Vec<Matrix> = self.biases.clone().into_iter().map(|mat: Matrix| Matrix::zero_matrix(mat.rows, mat.cols) ).collect();
 
 		for i in 0..outputs.len() {
-			let out = Matrix::from_data(vec![outputs[i]]).transpose();
-			let mut err = Matrix::subtract(&Matrix::from_data(vec![expected[i]]).transpose(), &out).apply_func(&|x| 2.0 * x);
+			let out = Matrix::from_data(vec![outputs[i].clone()]).transpose();
+			let mut err = Matrix::subtract(&Matrix::from_data(vec![expected[i].clone()]).transpose(), &out).apply_func(&|x| 2.0 * x);
 
 			let mut grad = out.apply_func(&|x| (1.0 - x) * x);
 
-			for j in 0..self.layers.len()
+			for j in (0..self.layers.len() - 1).rev() {
+				grad = Matrix::dot(&grad, &err);
+
+				w_c_avg[j] = Matrix::add(&w_c_avg[j], &Matrix::multiply(&grad, &self.data[j].transpose()).apply_func(&|x| self.learning_rate * x));
+				b_c_avg[j] = Matrix::add(&b_c_avg[j], &grad.apply_func(&|x| self.learning_rate * x));
+
+				grad = self.weights[j].apply_func(&|x| (1.0 - x) * x);
+				err = Matrix::multiply(&self.weights[i].transpose(), &err);
+			}
 		}
+
+		self.weights = self.weights.iter().zip(w_c_avg).map(| (x, y) | Matrix::subtract(&x, &y)).collect();
+		self.biases = self.biases.iter().zip(b_c_avg).map(| (x, y) | Matrix::subtract(&x, &y)).collect();
 	}
 
 	pub fn save(&self){
